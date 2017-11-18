@@ -41,6 +41,10 @@ class BooksApp extends React.Component {
     });
   }
 
+  getShelves() {
+    return this.state.shelves.map((shelf) => shelf.name);
+  }
+
   render() {
     return (
       <div className="app">
@@ -72,7 +76,7 @@ class BooksApp extends React.Component {
             </div>
             <div className="list-books-content">
                 {this.state.shelves && this.state.shelves.map((shelf, index) => (
-                  <Shelf books={shelf.books} name={shelf.name} key={index}/>
+                  <Shelf books={shelf.books} name={shelf.name} shelves={this.getShelves()} key={index}/>
                 ))}
               </div>
             <div className="open-search">

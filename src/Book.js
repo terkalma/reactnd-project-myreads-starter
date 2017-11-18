@@ -2,8 +2,6 @@ import React, { Component } from 'react'
 
 class Book extends Component {
 
-    debugger;
-
     render() {
         return (
           <div className="book">
@@ -12,10 +10,11 @@ class Book extends Component {
               <div className="book-shelf-changer">
                 <select>
                   <option value="none" disabled>Move to...</option>
-                  <option value="currentlyReading">Currently Reading</option>
-                  <option value="wantToRead">Want to Read</option>
-                  <option value="read">Read</option>
-                  <option value="none">None</option>
+                  {this.props.shelves.map((shelf, index) => (
+                    <option value="none" key={index} selected={shelf == this.props.data.shelf}>
+                      {shelf}
+                    </option>
+                    ))}
                 </select>
               </div>
             </div>
