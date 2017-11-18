@@ -1,7 +1,9 @@
 import React from 'react'
-import { Route, Link, history } from 'react-router-dom'
+import { Route, Link } from 'react-router-dom'
 import * as BooksAPI from './BooksAPI'
 import Shelf from './Shelf'
+import Search from './Search'
+import * as Util from './Util'
 import './App.css'
 
 class BooksApp extends React.Component {
@@ -9,42 +11,47 @@ class BooksApp extends React.Component {
     shelves: [],
     searchResults: [],
     books: {},
-    isLoading: false,
-    q: ''
+    isLoading: false
   }
 
   componentDidMount() {
     this.setState({isLoading: true});
-
-    BooksAPI.getAll().then((data) => {
-      let shelves = [],
-          books = {},
-          bookMap = {};
-
-      data.forEach((book) => {
-        books[book.id] = book;
-
-        if ( bookMap[book.shelf] ) {
-          bookMap[book.shelf].push(book.id);
-        } else {
-          shelves.push(book.shelf);
-          bookMap[book.shelf] = [book.id];
-        }
-      });
-
-      this.setState({
-        shelves: shelves.map((shelf) => ({
-          name: shelf,
-          books: bookMap[shelf]
-        })),
-        books: books,
-        isLoading: false
-      });
-    });
+    this.loadBooks();
   }
 
-  getShelves = () => {
-    return this.state.shelves.map((shelf) => shelf.name);
+  loadBooks = () => BooksAPI.getAll().then((data) => {
+    let shelves = [],
+        books = {},
+        bookMap = {};
+
+    const term = Util.getSearchTerm();
+
+    data.forEach((book) => {
+      books[book.id] = book;
+
+      if ( bookMap[book.shelf] ) {
+        bookMap[book.shelf].push(book.id);
+      } else {
+        shelves.push(book.shelf);
+        bookMap[book.shelf] = [book.id];
+      }
+    });
+
+    this.setState({
+      shelves: shelves.map((shelf) => ({
+        name: shelf,
+        books: bookMap[shelf],
+      })),
+      books: books
+    });
+
+    (term.length > 0) ? this.search(term) : this.resetSearch()
+  });
+
+  getOptions = () => {
+    const allOptions = new Set(["currentlyReading", "wantToRead", "read",
+      ...this.state.shelves.map((shelf) => shelf.name)]);
+    return Array.from(allOptions);
   }
 
   onUpdate = (shelf, bookId) => {
@@ -61,46 +68,46 @@ class BooksApp extends React.Component {
     });
   }
 
-  onSearch = (event, history) => {
-    const q = event.target.value;
+  search = (term) => BooksAPI.search(term).then((data) => {
+    let newBooks = {},
+        searchResults = [];
 
-    BooksAPI.search(q).then((data) => {
-      let newBooks = {},
-          searchResults = [];
+    if ( data.error ) return;
 
-      if ( data.error ) return;
+    data.forEach((book) => {
+      newBooks[book.id] = book;
 
-      data.forEach((book) => {
-        newBooks[book.id] = book;
+      // The current state is the sourse of thruth for shelf information.
+      if (this.state.books[book.id])
+        newBooks[book.id].shelf = this.state.books[book.id].shelf;
 
-        if (this.state.books[book.id])
-          newBooks[book.id].shelf = this.state.books[book.id].shelf;
-
-        searchResults.push(book.id);
-      });
-
-      this.setState({
-        searchResults: searchResults,
-        books: {...this.state.books, ...newBooks},
-        isLoading: false,
-        q: q
-      });
-
-      history.push({search: q})
+      searchResults.push(book.id);
     });
-  }
+
+    this.setState({
+      searchResults: searchResults,
+      books: {...this.state.books, ...newBooks},
+      isLoading: false
+    });
+  });
+
+  resetSearch = () => this.setState({ searchResults: [], isLoading: false });
 
   render() {
-    return (
+    return true && (
       <div className="app">
-        <Route exact path="/" render={() =>
+        <Route exact path="/" render={(history) =>
           <div className="list-books">
             <div className="list-books-title">
               <h1>MyReads</h1>
             </div>
             <div className="list-books-content">
                 {this.state.shelves && this.state.shelves.map((shelf, index) => (
-                  <Shelf books={shelf.books.map((b) => this.state.books[b])} name={shelf.name} shelves={this.getShelves()} key={index} onUpdate={this.onUpdate}/>
+                  <Shelf name={shelf.name}
+                         books={shelf.books.map((b) => this.state.books[b])}
+                         options={this.getOptions()}
+                         key={index}
+                         onUpdate={this.onUpdate}/>
                 ))}
               </div>
             <div className="open-search">
@@ -109,29 +116,13 @@ class BooksApp extends React.Component {
           </div>
         }/>
         <Route path="/search" render={({ history }) =>
-          <div className="search-books">
-            <div className="search-books-bar">
-              <Link to="/" className="close-search">Close</Link>
-              <div className="search-books-input-wrapper">
-                {/*
-                  NOTES: The search from BooksAPI is limited to a particular set of search terms.
-                  You can find these search terms here:
-                  https://github.com/udacity/reactnd-project-myreads-starter/blob/master/SEARCH_TERMS.md
-
-                  However, remember that the BooksAPI.search method DOES search by title or author. So, don't worry if
-                  you don't find a specific author or title. Every search is limited by search terms.
-                */}
-                <input type="text" placeholder="Search by title or author" defaultValue={this.state.q} onChange={(event) => this.onSearch(event, history)}/>
-              </div>
-            </div>
-            <div className="search-books-results">
-              <ol className="books-grid"></ol>
-              <Shelf books={this.state.searchResults.map((b) => this.state.books[b])}
-                     shelves={this.getShelves()}
-                     name="Search Results"
-                     onUpdate={this.onUpdate}/>
-            </div>
-          </div>
+          <Search books={this.state.searchResults.map((id) => this.state.books[id])}
+                  handleValueChange={(term) => {
+                    (term.length > 0) ? this.search(term) : this.resetSearch();
+                    history.push({ search: `q=${term}` });
+                  }}
+                  options={this.getOptions()}
+                  onUpdate={this.onUpdate} />
         }/>
       </div>
     )
