@@ -9,13 +9,11 @@ class Book extends Component {
             <div className="book-top">
               <div className="book-cover" style={{ width: 128, height: 193, backgroundImage: `url("${this.props.data.imageLinks.thumbnail}")` }}></div>
               <div className="book-shelf-changer">
-                <select>
+                <select defaultValue={this.props.data.shelf}>
                   <option value="none" disabled>Move to...</option>
                   {this.props.shelves.map((shelf, index) => (
-                    <option value={shelf} key={index} selected={shelf == this.props.data.shelf}>
-                      {Util.humanize(shelf)}
-                    </option>
-                    ))}
+                    <option value={shelf} key={index}>{Util.humanize(shelf)}</option>
+                  ))}
                 </select>
               </div>
             </div>
