@@ -14,6 +14,7 @@ class Book extends Component {
               {this.props.shelves.map((shelf, index) => (
                 <option value={shelf} key={index}>{Util.humanize(shelf)}</option>
               ))}
+              <option value="none">None</option>
             </select>
           </div>
         </div>

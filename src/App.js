@@ -1,5 +1,5 @@
 import React from 'react'
-import { Route, Link } from 'react-router-dom'
+import { Route, Link, history } from 'react-router-dom'
 import * as BooksAPI from './BooksAPI'
 import Shelf from './Shelf'
 import './App.css'
@@ -9,7 +9,8 @@ class BooksApp extends React.Component {
     shelves: [],
     searchResults: [],
     books: {},
-    isLoading: false
+    isLoading: false,
+    q: ''
   }
 
   componentDidMount() {
@@ -60,10 +61,8 @@ class BooksApp extends React.Component {
     });
   }
 
-  onSearch = (event) => {
+  onSearch = (event, history) => {
     const q = event.target.value;
-
-    if ( q.length < 3 ) return;
 
     BooksAPI.search(q).then((data) => {
       let newBooks = {},
@@ -83,8 +82,11 @@ class BooksApp extends React.Component {
       this.setState({
         searchResults: searchResults,
         books: {...this.state.books, ...newBooks},
-        isLoading: false
+        isLoading: false,
+        q: q
       });
+
+      history.push({search: q})
     });
   }
 
@@ -106,7 +108,7 @@ class BooksApp extends React.Component {
             </div>
           </div>
         }/>
-        <Route path="/search" render={() =>
+        <Route path="/search" render={({ history }) =>
           <div className="search-books">
             <div className="search-books-bar">
               <Link to="/" className="close-search">Close</Link>
@@ -119,7 +121,7 @@ class BooksApp extends React.Component {
                   However, remember that the BooksAPI.search method DOES search by title or author. So, don't worry if
                   you don't find a specific author or title. Every search is limited by search terms.
                 */}
-                <input type="text" placeholder="Search by title or author" onChange={this.onSearch}/>
+                <input type="text" placeholder="Search by title or author" defaultValue={this.state.q} onChange={(event) => this.onSearch(event, history)}/>
               </div>
             </div>
             <div className="search-books-results">
