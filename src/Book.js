@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import * as Util from './Util'
 
 class Book extends Component {
 
@@ -11,8 +12,8 @@ class Book extends Component {
                 <select>
                   <option value="none" disabled>Move to...</option>
                   {this.props.shelves.map((shelf, index) => (
-                    <option value="none" key={index} selected={shelf == this.props.data.shelf}>
-                      {shelf}
+                    <option value={shelf} key={index} selected={shelf == this.props.data.shelf}>
+                      {Util.humanize(shelf)}
                     </option>
                     ))}
                 </select>
