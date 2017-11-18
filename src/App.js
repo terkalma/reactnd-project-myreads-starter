@@ -20,14 +20,17 @@ class BooksApp extends React.Component {
 
     BooksAPI.getAll().then((data) => {
       let shelves = [],
+          books = {},
           bookMap = {};
 
       data.forEach((book) => {
+        books[book.id] = book;
+
         if ( bookMap[book.shelf] ) {
-          bookMap[book.shelf].push(book);
+          bookMap[book.shelf].push(book.id);
         } else {
           shelves.push(book.shelf);
-          bookMap[book.shelf] = [book];
+          bookMap[book.shelf] = [book.id];
         }
       });
 
@@ -36,13 +39,24 @@ class BooksApp extends React.Component {
           name: shelf,
           books: bookMap[shelf]
         })),
+        books: books,
         isLoading: false
       });
     });
   }
 
-  getShelves() {
+  getShelves = () => {
     return this.state.shelves.map((shelf) => shelf.name);
+  }
+
+  onUpdate = (event, bookId) => {
+    this.setState({isLoading: true});
+    BooksAPI.update(bookId, event.target.value).then((data) => {
+      this.setState({
+        shelves: this.state.shelves.map((s) => ({...s, books: data[s.name]})),
+        isLoading: false
+      });
+    });
   }
 
   render() {
@@ -76,7 +90,7 @@ class BooksApp extends React.Component {
             </div>
             <div className="list-books-content">
                 {this.state.shelves && this.state.shelves.map((shelf, index) => (
-                  <Shelf books={shelf.books} name={shelf.name} shelves={this.getShelves()} key={index}/>
+                  <Shelf books={shelf.books.map((b) => this.state.books[b])} name={shelf.name} shelves={this.getShelves()} key={index} onUpdate={this.onUpdate}/>
                 ))}
               </div>
             <div className="open-search">
