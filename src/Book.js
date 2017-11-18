@@ -9,7 +9,7 @@ class Book extends Component {
         <div className="book-top">
           <div className="book-cover" style={{ width: 128, height: 193, backgroundImage: `url("${this.props.data.imageLinks.thumbnail}")` }}></div>
           <div className="book-shelf-changer">
-            <select defaultValue={this.props.data.shelf} onChange={(e) => this.props.onUpdate(e, this.props.data.id)}>
+            <select defaultValue={this.props.data.shelf} onChange={(e) => this.props.onUpdate(e.target.value, this.props.data.id)}>
               <option value="none" disabled>Move to...</option>
               {this.props.shelves.map((shelf, index) => (
                 <option value={shelf} key={index}>{Util.humanize(shelf)}</option>
