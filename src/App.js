@@ -7,6 +7,7 @@ import './App.css'
 class BooksApp extends React.Component {
   state = {
     shelves: [],
+    searchResults: [],
     books: {},
     isLoading: false
   }
@@ -59,6 +60,34 @@ class BooksApp extends React.Component {
     });
   }
 
+  onSearch = (event) => {
+    const q = event.target.value;
+
+    if ( q.length < 3 ) return;
+
+    BooksAPI.search(q).then((data) => {
+      let newBooks = {},
+          searchResults = [];
+
+      if ( data.error ) return;
+
+      data.forEach((book) => {
+        newBooks[book.id] = book;
+
+        if (this.state.books[book.id])
+          newBooks[book.id].shelf = this.state.books[book.id].shelf;
+
+        searchResults.push(book.id);
+      });
+
+      this.setState({
+        searchResults: searchResults,
+        books: {...this.state.books, ...newBooks},
+        isLoading: false
+      });
+    });
+  }
+
   render() {
     return (
       <div className="app">
@@ -90,12 +119,15 @@ class BooksApp extends React.Component {
                   However, remember that the BooksAPI.search method DOES search by title or author. So, don't worry if
                   you don't find a specific author or title. Every search is limited by search terms.
                 */}
-                <input type="text" placeholder="Search by title or author"/>
-
+                <input type="text" placeholder="Search by title or author" onChange={this.onSearch}/>
               </div>
             </div>
             <div className="search-books-results">
               <ol className="books-grid"></ol>
+              <Shelf books={this.state.searchResults.map((b) => this.state.books[b])}
+                     shelves={this.getShelves()}
+                     name="Search Results"
+                     onUpdate={this.onUpdate}/>
             </div>
           </div>
         }/>

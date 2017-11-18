@@ -18,7 +18,7 @@ class Book extends Component {
           </div>
         </div>
         <div className="book-title">{this.props.data.title}</div>
-        <div className="book-authors">{this.props.data.authors.join(', ')}</div>
+        <div className="book-authors">{this.props.data.authors && this.props.data.authors.join(', ')}</div>
       </div>
     )
   }
