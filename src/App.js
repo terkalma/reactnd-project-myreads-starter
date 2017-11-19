@@ -56,16 +56,19 @@ class BooksApp extends React.Component {
 
   onUpdate = (shelf, bookId) => {
     this.setState({isLoading: true});
-    BooksAPI.update(bookId, shelf).then((data) => {
-      let books = this.state.books;
-      books[bookId].shelf = shelf;
-
-      this.setState({
-        shelves: this.state.shelves.map((s) => ({...s, books: data[s.name]})),
-        books: books,
-        isLoading: false
-      });
-    });
+    BooksAPI.update(bookId, shelf).then((data) => this.setState(prevState => {
+        return {
+          shelves: prevState.shelves.map((s) => ({...s, books: data[s.name]})),
+          books: {
+            ...prevState.books,
+            [bookId]: {
+              ...prevState.books[bookId],
+              shelf: shelf
+            }
+          },
+          isLoading: false
+        }
+    }));
   }
 
   search = (term) => BooksAPI.search(term).then((data) => {
